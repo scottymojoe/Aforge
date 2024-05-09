@@ -37,6 +37,9 @@
             this._mainPanel = new System.Windows.Forms.Panel();
             this._showParent = new System.Windows.Forms.TextBox();
             this._timeOpen = new System.Windows.Forms.Label();
+            this._leftBorder = new System.Windows.Forms.Panel();
+            this._rightBorder = new System.Windows.Forms.Panel();
+            this._bottomBorder = new System.Windows.Forms.Panel();
             this._controlPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._live)).BeginInit();
             this._mainPanel.SuspendLayout();
@@ -104,6 +107,8 @@
             // 
             // _mainPanel
             // 
+            this._mainPanel.Controls.Add(this._rightBorder);
+            this._mainPanel.Controls.Add(this._leftBorder);
             this._mainPanel.Controls.Add(this._controlPanel);
             this._mainPanel.Controls.Add(this._live);
             this._mainPanel.Dock = System.Windows.Forms.DockStyle.Top;
@@ -134,12 +139,37 @@
             this._timeOpen.TabIndex = 8;
             this._timeOpen.Text = "label1";
             // 
+            // _leftBorder
+            // 
+            this._leftBorder.Dock = System.Windows.Forms.DockStyle.Left;
+            this._leftBorder.Location = new System.Drawing.Point(0, 29);
+            this._leftBorder.Name = "_leftBorder";
+            this._leftBorder.Size = new System.Drawing.Size(10, 729);
+            this._leftBorder.TabIndex = 6;
+            // 
+            // _rightBorder
+            // 
+            this._rightBorder.Dock = System.Windows.Forms.DockStyle.Right;
+            this._rightBorder.Location = new System.Drawing.Point(362, 29);
+            this._rightBorder.Name = "_rightBorder";
+            this._rightBorder.Size = new System.Drawing.Size(10, 729);
+            this._rightBorder.TabIndex = 7;
+            // 
+            // _bottomBorder
+            // 
+            this._bottomBorder.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this._bottomBorder.Location = new System.Drawing.Point(0, 514);
+            this._bottomBorder.Name = "_bottomBorder";
+            this._bottomBorder.Size = new System.Drawing.Size(372, 10);
+            this._bottomBorder.TabIndex = 11;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.ClientSize = new System.Drawing.Size(372, 535);
+            this.ClientSize = new System.Drawing.Size(372, 524);
+            this.Controls.Add(this._bottomBorder);
             this.Controls.Add(this._thread2);
             this.Controls.Add(this._showParent);
             this.Controls.Add(this._thread3);
@@ -165,5 +195,8 @@
         private System.Windows.Forms.Panel _mainPanel;
         private System.Windows.Forms.TextBox _showParent;
         private System.Windows.Forms.Label _timeOpen;
+        private System.Windows.Forms.Panel _rightBorder;
+        private System.Windows.Forms.Panel _leftBorder;
+        private System.Windows.Forms.Panel _bottomBorder;
     }
 }

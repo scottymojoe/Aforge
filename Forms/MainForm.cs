@@ -61,6 +61,9 @@ namespace Forms
                     if (lockTaken)
                     {
                         _controlPanel.BackColor = _startingColor;
+                        _leftBorder.BackColor = Color.Transparent;
+                        _rightBorder.BackColor = Color.Transparent;
+                        _bottomBorder.BackColor = Color.Transparent;
                         _motionCount = 0;
                     }
                     else
@@ -134,7 +137,7 @@ namespace Forms
                     {
                         warningColor = Color.Red;
                     }
-                    BeginInvoke((MethodInvoker)delegate
+                    Invoke((MethodInvoker)delegate
                     {
                         bool lockTaken = false;
                         try
@@ -147,6 +150,9 @@ namespace Forms
                                     HideMainPanel();
                                 }
                                 _controlPanel.BackColor = warningColor;
+                                _leftBorder.BackColor = warningColor;
+                                _rightBorder.BackColor = warningColor;
+                                _bottomBorder.BackColor = warningColor;
                                 _resetTimer.Stop(); 
                                 _resetTimer.Start();
                             }
