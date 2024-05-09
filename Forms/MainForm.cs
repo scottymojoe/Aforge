@@ -22,6 +22,7 @@ namespace Forms
         MotionDetector _motionDetector = null;
         readonly System.Windows.Forms.Timer _resetTimer = new System.Windows.Forms.Timer();
         readonly Stopwatch _stopwatch = new Stopwatch();
+        readonly Stopwatch _openStopwatch = new Stopwatch();
         readonly Color _startingColor = Color.FromKnownColor(KnownColor.Control);
         bool _shutDown = false;
         int _motionCount = 0;
@@ -32,16 +33,26 @@ namespace Forms
             _startingColor = _controlPanel.BackColor;
             StartCamera();
 
+            _openStopwatch.Start();
+
             _stopwatch.Start();
             _resetTimer.Interval = 3000; // Set the timer interval to 3 seconds
             _resetTimer.Tick += ResetTimer_Tick;
             FormClosing += MainForm_FormClosing;
+
+            var timer = new System.Windows.Forms.Timer();
+            timer.Interval = 1000; // 1 second
+            timer.Tick += (sender, e) =>
+            {
+                _timeOpen.Text = _openStopwatch.Elapsed.ToString(@"hh\:mm\:ss");
+            };
+            timer.Start();
+            _showParent.Focus();
         }
 
         private void ResetTimer_Tick(object sender, EventArgs e)
         {
             _resetTimer.Stop();
-
             BeginInvoke((MethodInvoker)delegate {
                 bool lockTaken = false;
                 try
@@ -49,10 +60,8 @@ namespace Forms
                     Monitor.TryEnter(_lock, ref lockTaken);
                     if (lockTaken)
                     {
-                        _pictureBox.Visible = false;
                         _controlPanel.BackColor = _startingColor;
                         _motionCount = 0;
-                        _keepOpen.Checked = false;
                     }
                     else
                     {
@@ -63,7 +72,6 @@ namespace Forms
                 {
                     if (lockTaken)
                     {
-                        // Always release the lock if you were able to take it.
                         Monitor.Exit(_lock);
                     }
                 }
@@ -73,20 +81,13 @@ namespace Forms
         void StartCamera()
         {
             var videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            if (videoDevices.Count == 0)
-                throw new ApplicationException("No video devices found");
-
+            if (videoDevices.Count == 0) throw new ApplicationException("No video devices found");
             try
             {
                 _videoSource = new VideoCaptureDevice(videoDevices[0].MonikerString);
                 _videoSource.NewFrame += new NewFrameEventHandler(Video_NewFrame);
                 _videoSource.Start();
-
-                _motionDetector = new MotionDetector(
-                    new TwoFramesDifferenceDetector(),
-                    new MotionBorderHighlighting());
-
-                Console.WriteLine("Camera started successfully.");
+                _motionDetector = new MotionDetector(new TwoFramesDifferenceDetector(), new MotionBorderHighlighting());
             }
             catch (Exception ex)
             {
@@ -98,8 +99,7 @@ namespace Forms
         {
             try
             {
-                if (_shutDown || _stopwatch.ElapsedMilliseconds < 500)
-                    return;
+                if (_shutDown || _stopwatch.ElapsedMilliseconds < 500) return;
                 _stopwatch.Restart();
                 var bitmap = (Bitmap)eventArgs.Frame.Clone();
                 Invoke((MethodInvoker)delegate
@@ -110,15 +110,7 @@ namespace Forms
                         Monitor.TryEnter(_lock, ref lockTaken);
                         if (lockTaken)
                         {
-                            if (!_hideLive.Checked)
-                            {
-                                _live.Image = bitmap;
-                                _live.Visible = true;
-                            }
-                            else
-                            {
-                                _live.Visible = false;
-                            }
+                            _live.Image = bitmap;
                         }
                         else
                         {
@@ -129,13 +121,12 @@ namespace Forms
                     {
                         if (lockTaken)
                         {
-                            // Always release the lock if you were able to take it.
                             Monitor.Exit(_lock);
                         }
                     }
                 });
                 float motionLevel = _motionDetector.ProcessFrame((Bitmap)eventArgs.Frame.Clone());
-                if (motionLevel > 0.0001) // Adjust sensitivity as needed
+                if (motionLevel > 0.0001)
                 {
                     var warningColor = Color.Yellow;
                     _motionCount++;
@@ -143,7 +134,6 @@ namespace Forms
                     {
                         warningColor = Color.Red;
                     }
-                    // Display the video in the PictureBox control
                     BeginInvoke((MethodInvoker)delegate
                     {
                         bool lockTaken = false;
@@ -152,18 +142,13 @@ namespace Forms
                             Monitor.TryEnter(_lock, ref lockTaken);
                             if (lockTaken)
                             {
-                                if (_motionCount > 8 && !_keepOpen.Checked)
+                                if (_motionCount > 8)
                                 {
-                                    _mainPanel.Visible = false;
+                                    HideMainPanel();
                                 }
                                 _controlPanel.BackColor = warningColor;
-                                _pictureBox.Image = bitmap;
-                                if (!_alwaysHide.Checked)
-                                {
-                                    _pictureBox.Visible = true;
-                                }
-                                _resetTimer.Stop(); // Stop the timer if it's already running
-                                _resetTimer.Start(); // Start the timer
+                                _resetTimer.Stop(); 
+                                _resetTimer.Start();
                             }
                             else
                             {
@@ -174,7 +159,6 @@ namespace Forms
                         {
                             if (lockTaken)
                             {
-                                // Always release the lock if you were able to take it.
                                 Monitor.Exit(_lock);
                             }
                         }
@@ -187,13 +171,17 @@ namespace Forms
             }
         }
 
+        void HideMainPanel()
+        {
+            _mainPanel.Visible = false;
+            _showParent.Focus();
+        }
+
         void StopCamera()
         {
             if (_videoSource != null && _videoSource.IsRunning)
             {
                 _videoSource.SignalToStop();
-
-                // Stop the video source in a separate task
                 Task.Run(() =>
                 {
                     if (_videoSource != null && _videoSource.IsRunning)
@@ -201,7 +189,6 @@ namespace Forms
                         _videoSource.WaitForStop();
                     }
                 });
-
                 _videoSource = null;
                 _motionDetector = null;
             }
@@ -215,30 +202,14 @@ namespace Forms
             StopCamera();
         }
 
-        void CloseForm()
-        {
-            PreClose();
-            Close();
-        }
-
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             PreClose();
         }
 
-        private void Show_Click(object sender, EventArgs e)
-        {
-            _pictureBox.Visible = true;
-        }
-
-        private void Hide_Click(object sender, EventArgs e)
-        {
-            _pictureBox.Visible = false;
-        }
-
         private void Close_Click(object sender, EventArgs e)
         {
-            CloseForm();
+            HideMainPanel();
         }
 
         private void ShowParent_TextChanged(object sender, EventArgs e)
