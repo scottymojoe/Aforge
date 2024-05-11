@@ -21,10 +21,10 @@ namespace Forms
         BackgroundWorker _backgroundWorker = new BackgroundWorker();
         VideoCaptureDevice _videoSource = null;
         MotionDetector _motionDetector = null;
-        readonly System.Windows.Forms.Timer _resetTimer = new System.Windows.Forms.Timer();
+        readonly System.Windows.Forms.Timer _noMotionTimer = new System.Windows.Forms.Timer();
         readonly System.Windows.Forms.Timer _autoCloseTimer = new System.Windows.Forms.Timer();
-        readonly Stopwatch _stopwatch = new Stopwatch();
-        readonly Stopwatch _openStopwatch = new Stopwatch();
+        readonly Stopwatch _motionStopwatch = new Stopwatch();
+        readonly Stopwatch _runningStopwatch = new Stopwatch();
         readonly Stopwatch _outputStopwatch = new Stopwatch();
         readonly Color _startingColor = Color.FromKnownColor(KnownColor.Control);
         bool _shutDown = false;
@@ -46,13 +46,11 @@ namespace Forms
             _messages.Text = "";
 
             _startingColor = _controlPanel.BackColor;
-            StartCamera();
 
-            _stopwatch.Start();
-            _openStopwatch.Start();
-            
-            _resetTimer.Interval = 3000; // Set the timer interval to 3 seconds
-            _resetTimer.Tick += ResetTimer_Tick;
+            _runningStopwatch.Start();
+
+            _noMotionTimer.Interval = 3000; // Set the timer interval to 3 seconds
+            _noMotionTimer.Tick += NoMotionTimer_Tick;
 
             FormClosing += MainForm_FormClosing;
 
@@ -60,7 +58,7 @@ namespace Forms
             timer.Interval = 1000; // 1 second
             timer.Tick += (sender, e) =>
             {
-                _timeOpen.Text = _openStopwatch.Elapsed.ToString(@"hh\:mm\:ss");
+                _timeOpen.Text = _runningStopwatch.Elapsed.ToString(@"hh\:mm\:ss");
             };
             timer.Start();
             _showParent.Focus();
@@ -81,7 +79,7 @@ namespace Forms
             _backgroundWorker.WorkerReportsProgress = true;
             _backgroundWorker.DoWork += (sender, e) =>
             {
-                while(true)
+                while (true)
                 {
                     _backgroundWorker.ReportProgress(0);
                     Thread.Sleep(5000);
@@ -91,7 +89,7 @@ namespace Forms
             {
                 if (_outputStopwatch.IsRunning)
                 {
-                    if (_outputStopwatch.Elapsed == TimeSpan.FromMinutes(30)) 
+                    if (_outputStopwatch.Elapsed == TimeSpan.FromMinutes(30))
                     {
                         _output.Text = "";
                     }
@@ -111,7 +109,9 @@ namespace Forms
                     }
                 }
             };
+
             _backgroundWorker.RunWorkerAsync();
+            StartCamera();
         }
 
         bool TryAquireLock(int maxAttempts)
@@ -178,8 +178,7 @@ namespace Forms
         void AppendMessage(string message)
         {
             if (_shutDown) return;
-            var currentText = _messages.Text;
-            _messages.Text = $"[{DateTime.Now}]: {message}{Environment.NewLine}{currentText}";
+            _messages.Items.Insert(0, $"[{DateTime.Now}]: {message}");
         }
 
         void HideMainPanel()
@@ -200,38 +199,9 @@ namespace Forms
         void PreClose()
         {
             _shutDown = true;
-            _resetTimer.Stop();
-            _stopwatch.Stop();
+            _noMotionTimer.Stop();
+            _motionStopwatch.Stop();
             StopCamera();
-        }
-
-        void ResetTimer_Tick(object sender, EventArgs e)
-        {
-            bool lockTaken = false;
-            try
-            {
-                Monitor.TryEnter(_lock, ref lockTaken);
-                if (lockTaken)
-                {
-                    _resetTimer.Stop();
-                    _controlPanel.BackColor = _startingColor;
-                    _leftBorder.BackColor = Color.Transparent;
-                    _rightBorder.BackColor = Color.Transparent;
-                    _bottomBorder.BackColor = Color.Transparent;
-                    _motionCount = 0;
-                }
-                else
-                {
-                    AppendMessage("Thread 1 lock was not taken, which means the object is currently locked by another thread.");
-                }
-            }
-            finally
-            {
-                if (lockTaken)
-                {
-                    Monitor.Exit(_lock);
-                }
-            }
         }
 
         void Video_NewFrame(object sender, NewFrameEventArgs eventArgs)
@@ -245,53 +215,79 @@ namespace Forms
                     {
                         if (lockAquired)
                         {
-                            if (_shutDown || _stopwatch.ElapsedMilliseconds < 500) return;
-                            _stopwatch.Restart();
-                            if (_videoSource != null)
+                            try
                             {
-                                using (var bitmap = (Bitmap)eventArgs.Frame.Clone())
+                                if (_shutDown) return;
+                                if (_videoSource != null)
                                 {
-                                    _live.Image = (Bitmap)bitmap.Clone();
-                                    float motionLevel = _motionDetector.ProcessFrame((Bitmap)bitmap.Clone());
-                                    if (motionLevel > 0.0001)
+                                    using (var bitmap = (Bitmap)eventArgs.Frame.Clone())
                                     {
-                                        var warningColor = Color.Yellow;
-                                        _motionCount++;
-                                        AppendMessage($"Sequenced event {_motionCount} detected.");
-                                        if (_motionCount > 4)
+                                        var currentImage = _live.Image;
+                                        if (currentImage != null)
                                         {
-                                            warningColor = Color.Red;
+                                            currentImage.Dispose();
                                         }
-                                        if (_motionCount > 8)
+                                        _live.Image = (Bitmap)bitmap.Clone();
+                                        double motionLevel = _motionDetector.ProcessFrame(bitmap);
+                                        motionLevel = Math.Round(motionLevel, 8);
+                                        decimal decimalMotionLevel = (decimal)motionLevel;
+                                        if (motionLevel > 0.00001)
                                         {
-                                            HideForm();
-                                            AppendMessage($"Sequenced event {_motionCount} detected. Taking measures.");
-                                            return;
-                                        }
-                                        _controlPanel.BackColor = warningColor;
-                                        _leftBorder.BackColor = warningColor;
-                                        _rightBorder.BackColor = warningColor;
-                                        _bottomBorder.BackColor = warningColor;
-                                        _resetTimer.Stop();
-                                        _resetTimer.Start();
-                                        if (!_keep.Checked && ActiveForm != this)
-                                        {
-                                            HideMainPanel();
-                                        }
-                                        BringToFront();
-                                        TopMost = true;
-                                        if (!_top.Checked)
-                                        {
-                                            TopMost = false;
+                                            _noMotionTimer.Stop();
+                                            var warningColor = Color.Yellow;
+                                            if (motionLevel > 0.0001)
+                                            {
+                                                if (!_motionStopwatch.IsRunning)
+                                                {
+                                                    _motionStopwatch.Start();
+                                                }
+                                                _motionCount++;
+                                            }
+                                            AppendMessage($"Bitmap event {_motionCount} detected at level ({decimalMotionLevel}).");
+                                            if (_motionStopwatch.Elapsed >= TimeSpan.FromSeconds(2))
+                                            {
+                                                warningColor = Color.Red;
+                                            }
+                                            if (_motionStopwatch.Elapsed >= TimeSpan.FromSeconds(4) || motionLevel > .001)
+                                            {
+                                                HideForm();
+                                                if (_motionStopwatch.Elapsed >= TimeSpan.FromSeconds(4))
+                                                {
+                                                    AppendMessage($"Taking elapsed time related measures at second {_motionStopwatch.Elapsed.TotalSeconds} and level {decimalMotionLevel}.");
+                                                }
+                                                else if (motionLevel > .001)
+                                                {
+                                                    AppendMessage($"Taking level related measures at level {decimalMotionLevel} and second {_motionStopwatch.Elapsed.TotalSeconds}.");
+                                                }
+                                                _noMotionTimer.Start();
+                                                return;
+                                            }
+                                            _controlPanel.BackColor = warningColor;
+                                            _leftBorder.BackColor = warningColor;
+                                            _rightBorder.BackColor = warningColor;
+                                            _bottomBorder.BackColor = warningColor;
+                                            if (!_keep.Checked && ActiveForm != this)
+                                            {
+                                                HideMainPanel();
+                                            }
+                                            _noMotionTimer.Start();
                                         }
                                     }
                                 }
+                            }
+                            catch (Exception ex)
+                            {
+                                AppendMessage("Error processing frame: " + ex.Message);
                             }
                         }
                         else
                         {
                             Trace.TraceError("Thread 2 lock was not taken, which means the object is currently locked by another thread.");
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError("Error processing frame: " + ex.Message);
                     }
                     finally
                     {
@@ -317,16 +313,12 @@ namespace Forms
 
         private void ShowParent_TextChanged(object sender, EventArgs e)
         {
-            var lockAquired = TryAquireLock(5);
-            if (lockAquired)
+            if (_showParent.Text == "qrz")
             {
-                if (_showParent.Text == "qrz")
-                {
-                    _placeholder.Visible = false;
-                    _outputStopwatch.Stop();
-                    _mainPanel.Visible = true;
-                    _showParent.Text = "";
-                }
+                _placeholder.Visible = false;
+                _outputStopwatch.Stop();
+                _mainPanel.Visible = true;
+                _showParent.Text = "";
             }
         }
 
@@ -345,6 +337,22 @@ namespace Forms
         private void Messages_DoubleClick(object sender, EventArgs e)
         {
             _messages.Text = "";
+        }
+
+        void NoMotionTimer_Tick(object sender, EventArgs e)
+        {
+            _motionStopwatch.Reset();
+            _noMotionTimer.Stop();
+            _controlPanel.BackColor = _startingColor;
+            _leftBorder.BackColor = Color.Transparent;
+            _rightBorder.BackColor = Color.Transparent;
+            _bottomBorder.BackColor = Color.Transparent;
+            _motionCount = 0;
+        }
+
+        private void ClearMessages_Click(object sender, EventArgs e)
+        {
+            _messages.Items.Clear();
         }
     }
 }

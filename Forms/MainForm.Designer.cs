@@ -33,7 +33,7 @@
             this._top = new System.Windows.Forms.CheckBox();
             this._timeOpen = new System.Windows.Forms.Label();
             this._close = new System.Windows.Forms.Button();
-            this._messages = new System.Windows.Forms.Label();
+            this._messages = new System.Windows.Forms.ListBox();
             this._live = new System.Windows.Forms.PictureBox();
             this._mainPanel = new System.Windows.Forms.Panel();
             this._rightBorder = new System.Windows.Forms.Panel();
@@ -42,10 +42,13 @@
             this._bottomBorder = new System.Windows.Forms.Panel();
             this._placeholder = new System.Windows.Forms.Panel();
             this._output = new System.Windows.Forms.TextBox();
+            this._messagesPanel = new System.Windows.Forms.Panel();
+            this._clearMessages = new System.Windows.Forms.Button();
             this._controlPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._live)).BeginInit();
             this._mainPanel.SuspendLayout();
             this._placeholder.SuspendLayout();
+            this._messagesPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // _controlPanel
@@ -57,7 +60,7 @@
             this._controlPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this._controlPanel.Location = new System.Drawing.Point(0, 0);
             this._controlPanel.Name = "_controlPanel";
-            this._controlPanel.Size = new System.Drawing.Size(1205, 29);
+            this._controlPanel.Size = new System.Drawing.Size(1161, 29);
             this._controlPanel.TabIndex = 2;
             // 
             // _keep
@@ -102,13 +105,14 @@
             // 
             // _messages
             // 
-            this._messages.AutoSize = true;
+            this._messages.BackColor = System.Drawing.Color.Black;
+            this._messages.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this._messages.Dock = System.Windows.Forms.DockStyle.Fill;
             this._messages.ForeColor = System.Drawing.Color.White;
-            this._messages.Location = new System.Drawing.Point(9, 797);
+            this._messages.Location = new System.Drawing.Point(0, 0);
             this._messages.Name = "_messages";
-            this._messages.Size = new System.Drawing.Size(60, 13);
+            this._messages.Size = new System.Drawing.Size(1137, 96);
             this._messages.TabIndex = 3;
-            this._messages.Text = "_messages";
             this._messages.DoubleClick += new System.EventHandler(this.Messages_DoubleClick);
             // 
             // _live
@@ -116,8 +120,7 @@
             this._live.Dock = System.Windows.Forms.DockStyle.Fill;
             this._live.Location = new System.Drawing.Point(0, 0);
             this._live.Name = "_live";
-            this._live.Size = new System.Drawing.Size(1205, 758);
-            this._live.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this._live.Size = new System.Drawing.Size(1161, 758);
             this._live.TabIndex = 5;
             this._live.TabStop = false;
             // 
@@ -130,14 +133,14 @@
             this._mainPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this._mainPanel.Location = new System.Drawing.Point(0, 0);
             this._mainPanel.Name = "_mainPanel";
-            this._mainPanel.Size = new System.Drawing.Size(1205, 758);
+            this._mainPanel.Size = new System.Drawing.Size(1161, 758);
             this._mainPanel.TabIndex = 3;
             this._mainPanel.Visible = false;
             // 
             // _rightBorder
             // 
             this._rightBorder.Dock = System.Windows.Forms.DockStyle.Right;
-            this._rightBorder.Location = new System.Drawing.Point(1195, 29);
+            this._rightBorder.Location = new System.Drawing.Point(1151, 29);
             this._rightBorder.Name = "_rightBorder";
             this._rightBorder.Size = new System.Drawing.Size(10, 729);
             this._rightBorder.TabIndex = 7;
@@ -163,9 +166,9 @@
             // _bottomBorder
             // 
             this._bottomBorder.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._bottomBorder.Location = new System.Drawing.Point(0, 1049);
+            this._bottomBorder.Location = new System.Drawing.Point(0, 888);
             this._bottomBorder.Name = "_bottomBorder";
-            this._bottomBorder.Size = new System.Drawing.Size(1205, 10);
+            this._bottomBorder.Size = new System.Drawing.Size(1161, 10);
             this._bottomBorder.TabIndex = 11;
             // 
             // _placeholder
@@ -174,7 +177,7 @@
             this._placeholder.BackColor = System.Drawing.Color.Black;
             this._placeholder.Controls.Add(this._output);
             this._placeholder.ForeColor = System.Drawing.Color.White;
-            this._placeholder.Location = new System.Drawing.Point(12, 824);
+            this._placeholder.Location = new System.Drawing.Point(12, 885);
             this._placeholder.Name = "_placeholder";
             this._placeholder.Size = new System.Drawing.Size(200, 100);
             this._placeholder.TabIndex = 12;
@@ -194,17 +197,39 @@
             this._output.TabIndex = 13;
             this._output.Text = "_output";
             // 
+            // _messagesPanel
+            // 
+            this._messagesPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this._messagesPanel.Controls.Add(this._messages);
+            this._messagesPanel.Location = new System.Drawing.Point(12, 783);
+            this._messagesPanel.Name = "_messagesPanel";
+            this._messagesPanel.Size = new System.Drawing.Size(1137, 96);
+            this._messagesPanel.TabIndex = 13;
+            // 
+            // _clearMessages
+            // 
+            this._clearMessages.Location = new System.Drawing.Point(118, 759);
+            this._clearMessages.Name = "_clearMessages";
+            this._clearMessages.Size = new System.Drawing.Size(75, 23);
+            this._clearMessages.TabIndex = 0;
+            this._clearMessages.Text = "Clear";
+            this._clearMessages.UseVisualStyleBackColor = true;
+            this._clearMessages.Click += new System.EventHandler(this.ClearMessages_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.ClientSize = new System.Drawing.Size(1205, 1059);
+            this.ClientSize = new System.Drawing.Size(1161, 898);
+            this.Controls.Add(this._clearMessages);
+            this.Controls.Add(this._messagesPanel);
             this.Controls.Add(this._placeholder);
             this.Controls.Add(this._bottomBorder);
             this.Controls.Add(this._showParent);
             this.Controls.Add(this._mainPanel);
-            this.Controls.Add(this._messages);
             this.Name = "MainForm";
             this.Text = "Command";
             this._controlPanel.ResumeLayout(false);
@@ -213,6 +238,7 @@
             this._mainPanel.ResumeLayout(false);
             this._placeholder.ResumeLayout(false);
             this._placeholder.PerformLayout();
+            this._messagesPanel.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -222,7 +248,7 @@
         private System.Windows.Forms.Panel _controlPanel;
         private System.Windows.Forms.PictureBox _live;
         private System.Windows.Forms.Button _close;
-        private System.Windows.Forms.Label _messages;
+        private System.Windows.Forms.ListBox _messages;
         private System.Windows.Forms.Panel _mainPanel;
         private System.Windows.Forms.TextBox _showParent;
         private System.Windows.Forms.Label _timeOpen;
@@ -233,5 +259,7 @@
         private System.Windows.Forms.CheckBox _keep;
         private System.Windows.Forms.Panel _placeholder;
         private System.Windows.Forms.TextBox _output;
+        private System.Windows.Forms.Panel _messagesPanel;
+        private System.Windows.Forms.Button _clearMessages;
     }
 }
