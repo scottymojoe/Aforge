@@ -12,6 +12,7 @@ using AForge.Video;
 using AForge.Vision.Motion;
 using System.Diagnostics;
 using System.Threading;
+using System.Media;
 
 namespace Forms
 {
@@ -66,6 +67,7 @@ namespace Forms
             _autoCloseTimer.Interval = 1000 * 60 * 15;
             _autoCloseTimer.Tick += (sender, e) =>
             {
+                _stayOpen.Checked = false;
                 HideForm();
                 AppendMessage($"Auto close event detected. Taking measures.");
             };
@@ -183,6 +185,7 @@ namespace Forms
 
         void HideMainPanel()
         {
+            if (_stayOpen.Checked) return;
             _mainPanel.Visible = false;
             _placeholder.Dock = DockStyle.Fill;
             _placeholder.Visible = true;
@@ -202,6 +205,25 @@ namespace Forms
             _noMotionTimer.Stop();
             _motionStopwatch.Stop();
             StopCamera();
+        }
+
+        void PlaySound()
+        {
+            if (!_mainPanel.Visible) return;
+            SoundPlayer player = new SoundPlayer
+            {
+                SoundLocation = "C:\\Windows\\Media\\ding.wav"
+            };
+            player.LoadCompleted += (sender, e) =>
+            {
+                //Task.Run(() =>
+                //{
+                //    player.PlaySync();
+                //    player.PlaySync();
+                //    player.Dispose();
+                //});
+            };
+            player.LoadAsync();
         }
 
         void Video_NewFrame(object sender, NewFrameEventArgs eventArgs)
@@ -234,12 +256,14 @@ namespace Forms
                                         if (motionLevel > 0.00001)
                                         {
                                             _noMotionTimer.Stop();
-                                            var warningColor = Color.Yellow;
-                                            if (motionLevel > 0.0001)
+                                            var warningColor = Color.DarkGreen;
+                                            if (motionLevel > 0.0001 || _motionStopwatch.IsRunning)
                                             {
+                                                warningColor = Color.Yellow;
                                                 if (!_motionStopwatch.IsRunning)
                                                 {
                                                     _motionStopwatch.Start();
+                                                    PlaySound();
                                                 }
                                                 _motionCount++;
                                             }
@@ -315,6 +339,7 @@ namespace Forms
         {
             if (_showParent.Text == "qrz")
             {
+                ResetMotionTimer();
                 _placeholder.Visible = false;
                 _outputStopwatch.Stop();
                 _mainPanel.Visible = true;
@@ -353,6 +378,19 @@ namespace Forms
         private void ClearMessages_Click(object sender, EventArgs e)
         {
             _messages.Items.Clear();
+        }
+
+        private void _resetMotionTimer_Click(object sender, EventArgs e)
+        {
+            ResetMotionTimer();
+        }
+
+        void ResetMotionTimer()
+        {
+            _autoCloseTimer.Stop();
+            _autoCloseTimer.Start();
+            _motionStopwatch.Reset();
+            PlaySound();
         }
     }
 }

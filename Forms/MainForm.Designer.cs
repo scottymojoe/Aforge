@@ -31,6 +31,7 @@
             this._controlPanel = new System.Windows.Forms.Panel();
             this._keep = new System.Windows.Forms.CheckBox();
             this._top = new System.Windows.Forms.CheckBox();
+            this._stayOpen = new System.Windows.Forms.CheckBox();
             this._timeOpen = new System.Windows.Forms.Label();
             this._close = new System.Windows.Forms.Button();
             this._messages = new System.Windows.Forms.ListBox();
@@ -44,6 +45,7 @@
             this._output = new System.Windows.Forms.TextBox();
             this._messagesPanel = new System.Windows.Forms.Panel();
             this._clearMessages = new System.Windows.Forms.Button();
+            this._resetMotionTimer = new System.Windows.Forms.Button();
             this._controlPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._live)).BeginInit();
             this._mainPanel.SuspendLayout();
@@ -55,6 +57,7 @@
             // 
             this._controlPanel.Controls.Add(this._keep);
             this._controlPanel.Controls.Add(this._top);
+            this._controlPanel.Controls.Add(this._stayOpen);
             this._controlPanel.Controls.Add(this._timeOpen);
             this._controlPanel.Controls.Add(this._close);
             this._controlPanel.Dock = System.Windows.Forms.DockStyle.Top;
@@ -82,12 +85,24 @@
             this._top.UseVisualStyleBackColor = true;
             this._top.CheckedChanged += new System.EventHandler(this.Top_CheckedChanged);
             // 
+            // _stayOpen
+            // 
+            this._stayOpen.AutoSize = true;
+            this._stayOpen.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
+            this._stayOpen.ForeColor = System.Drawing.Color.Red;
+            this._stayOpen.Location = new System.Drawing.Point(107, 6);
+            this._stayOpen.Name = "_stayOpen";
+            this._stayOpen.Size = new System.Drawing.Size(15, 14);
+            this._stayOpen.TabIndex = 14;
+            this._stayOpen.UseVisualStyleBackColor = false;
+            this._stayOpen.CheckedChanged += new System.EventHandler(this.Top_CheckedChanged);
+            // 
             // _timeOpen
             // 
             this._timeOpen.AutoSize = true;
             this._timeOpen.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this._timeOpen.ForeColor = System.Drawing.Color.White;
-            this._timeOpen.Location = new System.Drawing.Point(118, 2);
+            this._timeOpen.Location = new System.Drawing.Point(128, 2);
             this._timeOpen.Name = "_timeOpen";
             this._timeOpen.Size = new System.Drawing.Size(66, 24);
             this._timeOpen.TabIndex = 8;
@@ -111,7 +126,7 @@
             this._messages.ForeColor = System.Drawing.Color.White;
             this._messages.Location = new System.Drawing.Point(0, 0);
             this._messages.Name = "_messages";
-            this._messages.Size = new System.Drawing.Size(1137, 96);
+            this._messages.Size = new System.Drawing.Size(1137, 102);
             this._messages.TabIndex = 3;
             this._messages.DoubleClick += new System.EventHandler(this.Messages_DoubleClick);
             // 
@@ -121,6 +136,7 @@
             this._live.Location = new System.Drawing.Point(0, 0);
             this._live.Name = "_live";
             this._live.Size = new System.Drawing.Size(1161, 758);
+            this._live.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this._live.TabIndex = 5;
             this._live.TabStop = false;
             // 
@@ -166,7 +182,7 @@
             // _bottomBorder
             // 
             this._bottomBorder.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._bottomBorder.Location = new System.Drawing.Point(0, 888);
+            this._bottomBorder.Location = new System.Drawing.Point(0, 894);
             this._bottomBorder.Name = "_bottomBorder";
             this._bottomBorder.Size = new System.Drawing.Size(1161, 10);
             this._bottomBorder.TabIndex = 11;
@@ -205,7 +221,7 @@
             this._messagesPanel.Controls.Add(this._messages);
             this._messagesPanel.Location = new System.Drawing.Point(12, 783);
             this._messagesPanel.Name = "_messagesPanel";
-            this._messagesPanel.Size = new System.Drawing.Size(1137, 96);
+            this._messagesPanel.Size = new System.Drawing.Size(1137, 102);
             this._messagesPanel.TabIndex = 13;
             // 
             // _clearMessages
@@ -218,12 +234,23 @@
             this._clearMessages.UseVisualStyleBackColor = true;
             this._clearMessages.Click += new System.EventHandler(this.ClearMessages_Click);
             // 
+            // _resetMotionTimer
+            // 
+            this._resetMotionTimer.Location = new System.Drawing.Point(199, 759);
+            this._resetMotionTimer.Name = "_resetMotionTimer";
+            this._resetMotionTimer.Size = new System.Drawing.Size(75, 23);
+            this._resetMotionTimer.TabIndex = 14;
+            this._resetMotionTimer.Text = "Reset";
+            this._resetMotionTimer.UseVisualStyleBackColor = true;
+            this._resetMotionTimer.Click += new System.EventHandler(this._resetMotionTimer_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.ClientSize = new System.Drawing.Size(1161, 898);
+            this.ClientSize = new System.Drawing.Size(1161, 904);
+            this.Controls.Add(this._resetMotionTimer);
             this.Controls.Add(this._clearMessages);
             this.Controls.Add(this._messagesPanel);
             this.Controls.Add(this._placeholder);
@@ -257,9 +284,11 @@
         private System.Windows.Forms.Panel _bottomBorder;
         private System.Windows.Forms.CheckBox _top;
         private System.Windows.Forms.CheckBox _keep;
+        private System.Windows.Forms.CheckBox _stayOpen;
         private System.Windows.Forms.Panel _placeholder;
         private System.Windows.Forms.TextBox _output;
         private System.Windows.Forms.Panel _messagesPanel;
         private System.Windows.Forms.Button _clearMessages;
+        private System.Windows.Forms.Button _resetMotionTimer;
     }
 }
